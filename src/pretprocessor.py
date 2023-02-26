@@ -19,7 +19,7 @@ def main():
     df = read_csv(args.path)
 
     ### Replace NaN with 0
-    df.fillna(0)
+    df = df.fillna(0)
 
     df.to_csv(args.path)
     log.info(f"Preprocessing finished and dumped to {args.path}")
