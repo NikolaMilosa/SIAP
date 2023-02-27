@@ -7,10 +7,13 @@ import matplotlib.pyplot as plt
 relevant_attributes = ["time", "BlkCnt", "CapMrktCurUSD", "DiffMean", "FeeMeanUSD", "FlowInExUSD", "HashRate", "NDF",
                        "ROI30d", "PriceUSD"]
 
+output_attribute = "PriceUSD"
+
 
 def get_args():
     parser = argparse.ArgumentParser(prog="Preprocessor for datasets for crypto")
     parser.add_argument("path", type=str, help="Path to the dataset csv which should be loaded")
+    parser.add_argument("visualize", type=bool, help="Should dataset be visualized")
 
     return parser.parse_args()
 
@@ -23,7 +26,7 @@ def read_csv(path):
 
 
 def plot_df_columns(df):
-    sns.pairplot(df)
+    sns.pairplot(df, y_vars=output_attribute, x_vars=relevant_attributes)
     plt.show()
 
 
@@ -33,8 +36,9 @@ def main():
     log.info(f"Starting preprocessor for {args.path}")
     df = read_csv(args.path)
 
-    ### Uncomment for graphical data representation
-    # plot_df_columns(df)
+    ### Graphical data representation
+    if args.visualize:
+        plot_df_columns(df)
 
     ### Replace NaN with 0
     df = df.fillna(0)
