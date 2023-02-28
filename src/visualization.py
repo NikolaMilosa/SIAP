@@ -32,7 +32,7 @@ def plot_histogram(df, bin_num):
 
 
 def visualize_data_details(df):
-    #plot_df_columns(df)
-    #plot_histogram(df, histogram_bin_num)
+    plot_df_columns(df)
+    plot_histogram(df, histogram_bin_num)
     plot_histograms(df, histograms_bin_num)
     print_description(df)
