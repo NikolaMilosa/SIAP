@@ -28,7 +28,6 @@ class Net(nn.Module):
         return x
 
 
-
 def convert_from_date_to_float(data):
     converted_data = pandas.to_datetime(data)
     return (converted_data - converted_data.min()).astype('timedelta64[s]').astype('int32').astype('float32')
