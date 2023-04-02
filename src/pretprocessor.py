@@ -6,14 +6,7 @@ from src.constants import relevant_attributes
 from src.nn import make_neural_network
 from src.scale import scale
 from src.visualization import visualize_data_details
-
-
-def get_args():
-    parser = argparse.ArgumentParser(prog="Preprocessor for datasets for crypto")
-    parser.add_argument("path", type=str, help="Path to the dataset csv which should be loaded")
-    parser.add_argument("visualize", type=bool, help="Should dataset be visualized")
-
-    return parser.parse_args()
+from args import get_args
 
 
 def read_csv(path):
