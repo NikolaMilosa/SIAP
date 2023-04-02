@@ -32,7 +32,7 @@ def main():
     preprocess(df, args.path)
 
     ### Feed it to NN
-    create_neural_network(df, args.path)
+    create_neural_network(df, args.path, args.num_epochs)
 
 
 if __name__ == "__main__":

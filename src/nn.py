@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import json
 from sklearn.model_selection import train_test_split
-from args import get_args
 
 
 # 1D convolutional neural network
@@ -32,7 +31,7 @@ class Net(nn.Module):
         return x
 
 
-def create_neural_network(data, path):
+def create_neural_network(data, path, epoch_num):
     # Extract the input and output data
     x = data.drop([output_attribute], axis=1).values.astype('float32')
     y = data[output_attribute].values.astype('float32')
@@ -50,11 +49,11 @@ def create_neural_network(data, path):
     net = Net()
     criterion = nn.MSELoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.001)
-    args = get_args()
+
 
     # Train the network
     loss_history = []
-    for epoch in range(args.num_epochs):
+    for epoch in range(epoch_num):
         optimizer.zero_grad()
         outputs = net(x_train.unsqueeze(1))
         loss = criterion(outputs, y_train.unsqueeze(1))
