@@ -30,8 +30,8 @@ def main():
     df = read_csv(args.path)
 
     ### Graphical data representation
-    if args.visualize:
-        visualize_data_details(df)
+    # if args.visualize:
+    #     visualize_data_details(df)
 
     ### Replace NaN with 0
     df = df.fillna(0)

@@ -8,6 +8,9 @@ pandas = "*"
 seaborn = "*"
 scikit-learn = "*"
 tensorflow = "*"
+torch = "*"
+torchvision = "*"
+torchaudio = "*"
 
 [dev-packages]
 
