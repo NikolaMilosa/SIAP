@@ -1,11 +1,14 @@
 import torch
 import torch.nn as nn
-import pandas
+import json
 from sklearn.model_selection import train_test_split
 from args import get_args
 
 
 # 1D convolutional neural network
+from src.constants import output_attribute
+
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -29,17 +32,10 @@ class Net(nn.Module):
         return x
 
 
-def convert_from_date_to_float(data):
-    converted_data = pandas.to_datetime(data)
-    return (converted_data - converted_data.min()).astype('timedelta64[s]').astype('int32').astype('float32')
-
-
-def make_neural_network(data):
-    # Convert date
-    data['time'] = convert_from_date_to_float(data['time'])
+def create_neural_network(data, path):
     # Extract the input and output data
-    x = data.drop(['PriceUSD'], axis=1).values.astype('float32')
-    y = data['PriceUSD'].values.astype('float32')
+    x = data.drop([output_attribute], axis=1).values.astype('float32')
+    y = data[output_attribute].values.astype('float32')
 
     # Split the dataset into training and testing sets
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42)
@@ -57,6 +53,7 @@ def make_neural_network(data):
     args = get_args()
 
     # Train the network
+    loss_history = []
     for epoch in range(args.num_epochs):
         optimizer.zero_grad()
         outputs = net(x_train.unsqueeze(1))
@@ -65,6 +62,7 @@ def make_neural_network(data):
         optimizer.step()
 
         if epoch % 10 == 0:
+            loss_history.append(loss.item())
             print('Epoch {}, Loss: {}'.format(epoch, loss.item()))
 
     # Test the network on the testing set
@@ -73,7 +71,12 @@ def make_neural_network(data):
         test_loss = criterion(test_outputs, y_test.unsqueeze(1))
         print('Test Loss: {}'.format(test_loss.item()))
 
-    # Return the loss values as a dictionary
-    return {
-        'test_loss': test_loss.item()
+    # Serialize model and loss
+    output_path = path.replace('input', 'output').replace('.csv', '.json')
+    serialization_data = {
+        'loss_history': loss_history
     }
+    with open(output_path, 'w') as f:
+        json.dump(serialization_data, f)
+    torch.save(net.state_dict(), output_path.replace('output', 'output/model'))
+

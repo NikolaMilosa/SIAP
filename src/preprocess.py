@@ -1,3 +1,4 @@
+import pandas
 from sklearn.preprocessing import RobustScaler, StandardScaler, MinMaxScaler
 import logger
 from enum import Enum
@@ -26,7 +27,13 @@ def min_max_scale(df, col_name):
     df[col_name] = scaled_col
 
 
+def convert_from_date_to_float(df, col_name):
+    df[col_name] = pandas.to_datetime(df[col_name])
+    df[col_name] = (df[col_name] - df[col_name].min()).astype('timedelta64[s]').astype('int32').astype('float32')
+
+
 def scale_btc(df):
+    convert_from_date_to_float(df, "time")
     standard_scale(df, "BlkCnt")
     min_max_scale(df, "CapMrktCurUSD")
     min_max_scale(df, "DiffMean")
@@ -37,6 +44,7 @@ def scale_btc(df):
 
 
 def scale_eth(df):
+    convert_from_date_to_float(df, "time")
     robust_scale(df, "BlkCnt")
     min_max_scale(df, "CapMrktCurUSD")
     min_max_scale(df, "DiffMean")
@@ -46,14 +54,22 @@ def scale_eth(df):
     robust_scale(df, "ROI30d")
 
 
-def scale(df, path):
+def serialize_data(df, path):
+    output_path = path.replace('input', 'output')
+    df.to_csv(output_path)
+    return output_path
+
+
+def preprocess(df, path):
     log = logger.get_logger('scaler')
     if ScaleOptions.BTC.value in path:
         scale_btc(df)
-        log.info("Bitcoin dataframe normalized successfully.")
+        output_path = serialize_data(df, path)
+        log.info(f"Preprocessing Bitcoin finished and dumped to {output_path} ")
         return
     if ScaleOptions.ETH.value in path:
         scale_eth(df)
-        log.info("Etherium dataframe normalized successfully.")
+        output_path = serialize_data(df, path)
+        log.info(f"Preprocessing Etherium finished and dumped to {output_path} ")
         return
-    log.warn("Normalizer for provided crypto coin doesn't exist!")
+    log.warn("Preprocessor for provided crypto coin doesn't exist!")
