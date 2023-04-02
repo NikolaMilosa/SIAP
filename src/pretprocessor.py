@@ -1,6 +1,7 @@
 import argparse
 import pandas
 import logger
+import json
 
 from src.constants import relevant_attributes
 from src.nn import make_neural_network
@@ -33,9 +34,11 @@ def main():
     scale(df, args.path)
 
     ### Feed it to NN
-    make_neural_network(df)
+    result = make_neural_network(df)
 
-    output_path = args.path.replace('input', 'output')
+    output_path = args.path.replace('input', 'output').replace('.csv', '.json')
+    with open(output_path, 'w') as f:
+        json.dump(result, f)
     df.to_csv(output_path)
     log.info(f"Preprocessing finished and dumped to {output_path} ")
 

@@ -73,3 +73,8 @@ def make_neural_network(data):
         test_outputs = net(x_test.unsqueeze(1))
         test_loss = criterion(test_outputs, y_test.unsqueeze(1))
         print('Test Loss: {}'.format(test_loss.item()))
+
+    # Return the loss values as a dictionary
+    return {
+        'test_loss': test_loss.item()
+    }
