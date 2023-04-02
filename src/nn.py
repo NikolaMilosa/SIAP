@@ -8,10 +8,10 @@ from sklearn.model_selection import train_test_split
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv1d(in_channels=9, out_channels=1, kernel_size=1, stride=1)
+        self.conv1 = nn.Conv1d(in_channels=9, out_channels=256, kernel_size=1, stride=1)
         self.relu = nn.ReLU()
-        self.gru = nn.GRU(input_size=1, hidden_size=16, num_layers=2, batch_first=True)
-        self.fc = nn.Linear(in_features=16, out_features=1)
+        self.gru = nn.GRU(input_size=256, hidden_size=64, num_layers=2, batch_first=True)
+        self.fc = nn.Linear(in_features=64, out_features=1)
 
     def forward(self, x):
         # Permute tensor to match input shape expected by Conv1d layer
@@ -22,6 +22,7 @@ class Net(nn.Module):
         x = self.relu(x)
 
         # Apply GRU layer
+        x = x.permute(0, 2, 1)
         x, _ = self.gru(x)
         x = self.fc(x[:, -1, :])
         return x
