@@ -8,16 +8,24 @@ from sklearn.model_selection import train_test_split
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv1d(in_channels=1, out_channels=1, kernel_size=1, stride=1)
+        self.conv1 = nn.Conv1d(in_channels=9, out_channels=1, kernel_size=1, stride=1)
         self.relu = nn.ReLU()
-        self.fc = nn.Linear(in_features=9, out_features=1)
+        self.gru = nn.GRU(input_size=1, hidden_size=16, num_layers=2, batch_first=True)
+        self.fc = nn.Linear(in_features=16, out_features=1)
 
     def forward(self, x):
+        # Permute tensor to match input shape expected by Conv1d layer
+        x = x.permute(0, 2, 1)
+
+        # Apply 1D convolution
         x = self.conv1(x)
         x = self.relu(x)
-        x = x.view(-1, 9)
-        x = self.fc(x)
+
+        # Apply GRU layer
+        x, _ = self.gru(x)
+        x = self.fc(x[:, -1, :])
         return x
+
 
 
 def convert_from_date_to_float(data):
