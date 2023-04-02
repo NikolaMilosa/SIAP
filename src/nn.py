@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import pandas
 from sklearn.model_selection import train_test_split
+from args import get_args
 
 
 # 1D convolutional neural network
@@ -52,10 +53,11 @@ def make_neural_network(data):
     # Initialize the network and define the loss function and optimizer
     net = Net()
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
+    optimizer = torch.optim.SGD(net.parameters(), lr=0.001)
+    args = get_args()
 
     # Train the network
-    for epoch in range(10000):
+    for epoch in range(args.num_epochs):
         optimizer.zero_grad()
         outputs = net(x_train.unsqueeze(1))
         loss = criterion(outputs, y_train.unsqueeze(1))
@@ -70,3 +72,8 @@ def make_neural_network(data):
         test_outputs = net(x_test.unsqueeze(1))
         test_loss = criterion(test_outputs, y_test.unsqueeze(1))
         print('Test Loss: {}'.format(test_loss.item()))
+
+    # Return the loss values as a dictionary
+    return {
+        'test_loss': test_loss.item()
+    }

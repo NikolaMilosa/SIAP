@@ -1,19 +1,13 @@
 import argparse
 import pandas
 import logger
+import json
 
 from src.constants import relevant_attributes
 from src.nn import make_neural_network
 from src.scale import scale
 from src.visualization import visualize_data_details
-
-
-def get_args():
-    parser = argparse.ArgumentParser(prog="Preprocessor for datasets for crypto")
-    parser.add_argument("path", type=str, help="Path to the dataset csv which should be loaded")
-    parser.add_argument("visualize", type=bool, help="Should dataset be visualized")
-
-    return parser.parse_args()
+from args import get_args
 
 
 def read_csv(path):
@@ -40,9 +34,11 @@ def main():
     scale(df, args.path)
 
     ### Feed it to NN
-    make_neural_network(df)
+    result = make_neural_network(df)
 
-    output_path = args.path.replace('input', 'output')
+    output_path = args.path.replace('input', 'output').replace('.csv', '.json')
+    with open(output_path, 'w') as f:
+        json.dump(result, f)
     df.to_csv(output_path)
     log.info(f"Preprocessing finished and dumped to {output_path} ")
 
