@@ -59,7 +59,7 @@ def create_neural_network(data, path, epoch_num):
         for i, data in enumerate(train_loader, 0):
             inputs, labels = data
             optimizer.zero_grad()
-            outputs = net(inputs[:, 1:].unsqueeze(1))
+            outputs = net(inputs.unsqueeze(1))
             loss = criterion(outputs, labels.unsqueeze(1))
             loss.backward()
             optimizer.step()
@@ -67,9 +67,9 @@ def create_neural_network(data, path, epoch_num):
             running_loss += loss.item()
 
         # Print the average loss every 10 epochs
-        if (epoch + 1) % 10 == 0:
+        if epoch % 10 == 0:
             train_loss = running_loss / len(train_loader)
-            print('Epoch {}, Training Loss: {}'.format(epoch + 1, train_loss))
+            print('Epoch {}, Training Loss: {}'.format(epoch, train_loss))
             running_loss = 0.0
 
     # Test the network on the testing set
