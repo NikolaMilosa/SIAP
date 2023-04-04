@@ -3,7 +3,6 @@ import torch.nn as nn
 import json
 from sklearn.model_selection import train_test_split
 
-
 # 1D convolutional neural network
 from src.constants import output_attribute
 
@@ -12,7 +11,7 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.conv1 = nn.Conv1d(in_channels=9, out_channels=256, kernel_size=1, stride=1)
-        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
         self.gru = nn.GRU(input_size=256, hidden_size=64, num_layers=2, batch_first=True)
         self.fc = nn.Linear(in_features=64, out_features=1)
 
@@ -22,7 +21,7 @@ class Net(nn.Module):
 
         # Apply 1D convolution
         x = self.conv1(x)
-        x = self.relu(x)
+        x = self.sigmoid(x)
 
         # Apply GRU layer
         x = x.permute(0, 2, 1)
@@ -49,7 +48,6 @@ def create_neural_network(data, path, epoch_num):
     net = Net()
     criterion = nn.MSELoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.001)
-
 
     # Train the network
     loss_history = []
@@ -78,4 +76,3 @@ def create_neural_network(data, path, epoch_num):
     with open(output_path, 'w') as f:
         json.dump(serialization_data, f)
     torch.save(net.state_dict(), output_path.replace('output', 'output/model'))
-
