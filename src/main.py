@@ -1,11 +1,11 @@
 import pandas
 import logger
 
-from src.constants import relevant_attributes
-from src.nn import create_neural_network
-from src.preprocess import preprocess
+from constants import relevant_attributes
+from nn import create_neural_network
+from preprocess import preprocess
 from args import get_args
-from src.visualization import visualize_data_details
+from visualization import visualize_data_details
 
 
 def read_csv(path):
@@ -16,14 +16,14 @@ def read_csv(path):
 
 
 def main():
-    log = logger.get_logger('pretprocessor')
+    log = logger.get_logger('main')
     args = get_args()
     log.info(f"Starting preprocessor for {args.path}")
     df = read_csv(args.path)
 
     ### Graphical data representation
-    if args.visualize:
-        visualize_data_details(df)
+    # if args.visualize:
+    #     visualize_data_details(df)
 
     ### Replace NaN with 0
     df = df.fillna(0)
