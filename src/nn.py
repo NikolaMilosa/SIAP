@@ -52,6 +52,7 @@ def create_neural_network(data, path, epoch_num):
     net = Net()
     criterion = nn.MSELoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.01)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epoch_num)
 
     # Train the network
     for epoch in range(epoch_num):
@@ -66,11 +67,13 @@ def create_neural_network(data, path, epoch_num):
 
             running_loss += loss.item()
 
+        scheduler.step()
+
         # Print the average loss every 10 epochs
         if epoch % 10 == 0:
             train_loss = running_loss / len(train_loader)
             print('Epoch {}, Training Loss: {}'.format(epoch, train_loss))
-            running_loss = 0.0
+
 
     # Test the network on the testing set
     with torch.no_grad():
