@@ -4,6 +4,8 @@ import json
 from sklearn.model_selection import train_test_split
 
 # 1D convolutional neural network
+from torch.utils.data import DataLoader
+
 from src.constants import output_attribute
 
 
@@ -38,40 +40,52 @@ def create_neural_network(data, path, epoch_num):
     # Split the dataset into training and testing sets
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42)
 
-    # Convert the data to PyTorch tensors
-    x_train = torch.tensor(x_train, dtype=torch.float32)
-    x_test = torch.tensor(x_test, dtype=torch.float32)
-    y_train = torch.tensor(y_train, dtype=torch.float32)
-    y_test = torch.tensor(y_test, dtype=torch.float32)
+    # Convert the data to PyTorch tensors and create datasets and dataloaders
+    train_dataset = torch.utils.data.TensorDataset(torch.tensor(x_train, dtype=torch.float32),
+                                                   torch.tensor(y_train, dtype=torch.float32))
+    test_dataset = torch.utils.data.TensorDataset(torch.tensor(x_test, dtype=torch.float32),
+                                                  torch.tensor(y_test, dtype=torch.float32))
+    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=16)
 
     # Initialize the network and define the loss function and optimizer
     net = Net()
     criterion = nn.MSELoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.001)
+    optimizer = torch.optim.SGD(net.parameters(), lr=0.01)
 
     # Train the network
-    loss_history = []
     for epoch in range(epoch_num):
-        optimizer.zero_grad()
-        outputs = net(x_train.unsqueeze(1))
-        loss = criterion(outputs, y_train.unsqueeze(1))
-        loss.backward()
-        optimizer.step()
+        running_loss = 0.0
+        for i, data in enumerate(train_loader, 0):
+            inputs, labels = data
+            optimizer.zero_grad()
+            outputs = net(inputs[:, 1:].unsqueeze(1))
+            loss = criterion(outputs, labels.unsqueeze(1))
+            loss.backward()
+            optimizer.step()
 
-        if epoch % 10 == 0:
-            loss_history.append(loss.item())
-            print('Epoch {}, Loss: {}'.format(epoch, loss.item()))
+            running_loss += loss.item()
+
+        # Print the average loss every 10 epochs
+        if (epoch + 1) % 10 == 0:
+            train_loss = running_loss / len(train_loader)
+            print('Epoch {}, Training Loss: {}'.format(epoch + 1, train_loss))
+            running_loss = 0.0
 
     # Test the network on the testing set
     with torch.no_grad():
-        test_outputs = net(x_test.unsqueeze(1))
-        test_loss = criterion(test_outputs, y_test.unsqueeze(1))
-        print('Test Loss: {}'.format(test_loss.item()))
+        test_loss = 0.0
+        for data in test_loader:
+            inputs, labels = data
+            test_outputs = net(inputs.unsqueeze(1))
+            test_loss += criterion(test_outputs, labels.unsqueeze(1)).item()
+
+        print('Test Loss: {}'.format(test_loss / len(test_loader)))
 
     # Serialize model and loss
     output_path = path.replace('input', 'output').replace('.csv', '.json')
     serialization_data = {
-        'loss_history': loss_history
+        'loss_history': 0
     }
     with open(output_path, 'w') as f:
         json.dump(serialization_data, f)
