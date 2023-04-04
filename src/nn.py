@@ -51,7 +51,7 @@ def create_neural_network(data, path, epoch_num):
     # Initialize the network and define the loss function and optimizer
     net = Net()
     criterion = nn.MSELoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.01)
+    optimizer = torch.optim.SGD(net.parameters(), lr=0.005)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epoch_num)
 
     # Train the network
