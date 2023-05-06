@@ -56,9 +56,9 @@ def create_neural_network(data, path, epoch_num):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Instantiate the MLP model and define the loss function, optimizer, and learning rate
-    input_size = 10
-    hidden_size1 = 64
-    hidden_size2 = 32
+    input_size = 9
+    hidden_size1 = 128
+    hidden_size2 = 64
     output_size = 1
     learning_rate = 0.001
 
@@ -81,7 +81,8 @@ def create_neural_network(data, path, epoch_num):
             optimizer.step()
 
         # Print the loss for this epoch
-        print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.6f}")
+        if epoch % 100 == 0:
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.6f}")
 
     # Evaluate the model on the test set
     model.eval()
