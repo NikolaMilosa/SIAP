@@ -100,11 +100,13 @@ def create_neural_network(data, path, epoch_num):
     # Calculate the mean squared error
     mse = mean_squared_error(y_true, y_pred)
     print(f"Mean Squared Error: {mse:.6f}")
-    # Serialize model and loss
-    # output_path = path.replace('input', 'output').replace('.csv', '.json')
-    # serialization_data = {
-    #     'loss_history': 0
-    # }
-    # with open(output_path, 'w') as f:
-    #     json.dump(serialization_data, f)
-    # torch.save(net.state_dict(), output_path.replace('output', 'output/model'))
+
+    # Test the neural network
+    with torch.no_grad():
+        outputs = model(torch.Tensor(X_test))
+        print("Predicted\tActual")
+        for i in range(len(outputs)):
+            if i % 15 == 0:
+                print(f'{outputs[i].item()}\t{y_test[i]}')
+
+
