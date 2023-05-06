@@ -31,6 +31,10 @@ def main():
     ### Normalize data
     preprocess(df, args.path)
 
+    ### Graphical data representation
+    # if args.visualize:
+    #     visualize_data_details(df)
+
     ### Feed it to NN
     create_neural_network(df, args.path, args.num_epochs)
 
