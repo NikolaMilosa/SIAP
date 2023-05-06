@@ -1,4 +1,5 @@
 import pandas
+import numpy as np
 from sklearn.preprocessing import RobustScaler, StandardScaler, MinMaxScaler
 import logger
 from enum import Enum
@@ -27,6 +28,12 @@ def min_max_scale(df, col_name):
     df[col_name] = scaled_col
 
 
+def min_max_log_scale(df, col_name):
+    scaler = MinMaxScaler()
+    scaled_col = scaler.fit_transform(df[[col_name]])
+    df[col_name] = np.log(scaled_col + 1)
+
+
 def convert_from_date_to_float(df, col_name):
     df[col_name] = pandas.to_datetime(df[col_name])
     df[col_name] = (df[col_name] - df[col_name].min()).astype('timedelta64[s]').astype('int32').astype('float32')
@@ -49,8 +56,8 @@ def scale_eth(df):
     robust_scale(df, "BlkCnt")
     min_max_scale(df, "CapMrktCurUSD")
     min_max_scale(df, "DiffMean")
-    robust_scale(df, "FeeMeanUSD")
-    robust_scale(df, "FlowInExUSD")
+    min_max_log_scale(df, "FeeMeanUSD")
+    min_max_log_scale(df, "FlowInExUSD")
     min_max_scale(df, "HashRate")
     robust_scale(df, "ROI30d")
 
