@@ -1,91 +1,104 @@
 import torch
 import torch.nn as nn
-import json
+import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
-
-# 1D convolutional neural network
-from torch import optim
-from torch.utils.data import DataLoader
+from sklearn.metrics import mean_squared_error
 
 from src.constants import output_attribute
 
-torch.manual_seed(42)
 
-
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.fc1 = nn.Linear(9, 64)
-        self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, 16)
-        self.fc4 = nn.Linear(16, 1)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.2)
+# Define the MLP architecture
+class MLP(nn.Module):
+    def __init__(self, input_size, hidden_size1, hidden_size2, output_size):
+        super(MLP, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size1)
+        self.fc2 = nn.Linear(hidden_size1, hidden_size2)
+        self.fc3 = nn.Linear(hidden_size2, output_size)
 
     def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = self.relu(self.fc2(x))
-        x = self.dropout(x)
-        x = self.relu(self.fc3(x))
-        x = self.dropout(x)
-        x = self.fc4(x)
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = self.fc3(x)
         return x
 
 
+# Create a custom dataset class for easier data handling
+class EthereumDataset(Dataset):
+    def __init__(self, X, y):
+        self.X = torch.tensor(X, dtype=torch.float32)
+        self.y = torch.tensor(y, dtype=torch.float32)
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+
 def create_neural_network(data, path, epoch_num):
-    # Extract the input and output data
-    x = data.drop([output_attribute], axis=1).values
-    # y = data[output_attribute].values.astype('float32')
-    y = data[output_attribute].values.reshape(-1, 1)
+    # Split the data into 70% training and 30% testing
+    train_data, test_data = train_test_split(data, test_size=0.3, random_state=42)
 
-    # Split the dataset into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42)
+    # Separate the input features and output (PriceUSD)
+    X_train = train_data.drop(output_attribute, axis=1).values
+    y_train = train_data[output_attribute].values
+    X_test = test_data.drop(output_attribute, axis=1).values
+    y_test = test_data[output_attribute].values
 
-    # Convert the data to PyTorch tensors and create datasets and dataloaders
-    # train_dataset = torch.utils.data.TensorDataset(torch.tensor(x_train, dtype=torch.float32),
-    #                                                torch.tensor(y_train, dtype=torch.float32))
-    # test_dataset = torch.utils.data.TensorDataset(torch.tensor(x_test, dtype=torch.float32),
-    #                                               torch.tensor(y_test, dtype=torch.float32))
-    # train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-    # test_loader = DataLoader(test_dataset, batch_size=16)
+    # Create the datasets and data loaders
+    train_dataset = EthereumDataset(X_train, y_train)
+    test_dataset = EthereumDataset(X_test, y_test)
 
-    # Instantiate neural network model
-    model = Net()
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=64)
+    # Set the device (use GPU if available)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Define loss function and optimizer
+    # Instantiate the MLP model and define the loss function, optimizer, and learning rate
+    input_size = 10
+    hidden_size1 = 64
+    hidden_size2 = 32
+    output_size = 1
+    learning_rate = 0.001
+
+    model = MLP(input_size, hidden_size1, hidden_size2, output_size).to(device)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Train the model
-    for epoch in range(epoch_num):
-        # Convert data to tensors
-        inputs = torch.from_numpy(x_train).float()
-        targets = torch.from_numpy(y_train).float()
+    num_epochs = epoch_num
+    for epoch in range(num_epochs):
+        model.train()
+        for i, (inputs, targets) in enumerate(train_loader):
+            inputs, targets = inputs.to(device), targets.to(device)
 
-        # Forward pass
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
+            optimizer.zero_grad()
+            outputs = model(inputs)
 
-        # Backward pass and optimization
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            loss = criterion(outputs.squeeze(), targets)
+            loss.backward()
+            optimizer.step()
 
-        if (epoch + 1) % 100 == 0:
-            print(f"Epoch [{epoch + 1}/{epoch_num}], Loss: {loss.item():.4f}")
+        # Print the loss for this epoch
+        print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.6f}")
 
     # Evaluate the model on the test set
+    model.eval()
+
     with torch.no_grad():
-        inputs = torch.from_numpy(x_test).float()
-        targets = torch.from_numpy(y_test).float()
+        y_pred = []
+        y_true = []
+        for inputs, targets in test_loader:
+            inputs, targets = inputs.to(device), targets.to(device)
+            outputs = model(inputs)
 
-        # Forward pass
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
+            y_pred.extend(outputs.squeeze().tolist())
+            y_true.extend(targets.tolist())
 
-        print(f"Test Loss: {loss.item():.4f}")
-
+    # Calculate the mean squared error
+    mse = mean_squared_error(y_true, y_pred)
+    print(f"Mean Squared Error: {mse:.6f}")
     # Serialize model and loss
     # output_path = path.replace('input', 'output').replace('.csv', '.json')
     # serialization_data = {
