@@ -45,6 +45,7 @@ def scale_btc(df):
 
 def scale_eth(df):
     convert_from_date_to_float(df, "time")
+    standard_scale(df, "time")
     robust_scale(df, "BlkCnt")
     min_max_scale(df, "CapMrktCurUSD")
     min_max_scale(df, "DiffMean")

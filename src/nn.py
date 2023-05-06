@@ -86,6 +86,14 @@ def create_neural_network(data, path, epoch_num):
 
         print(f"Test Loss: {loss.item():.4f}")
 
+    # Test the neural network
+    with torch.no_grad():
+        outputs = model(torch.Tensor(x_test))
+        print("Predicted\tActual")
+        for i in range(len(outputs)):
+            if i % 15 == 0:
+                print(f'{outputs[i].item()}\t{y_test[i]}')
+
     # Serialize model and loss
     # output_path = path.replace('input', 'output').replace('.csv', '.json')
     # serialization_data = {
