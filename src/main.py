@@ -36,7 +36,7 @@ def main():
     #     visualize_data_details(df)
 
     ### Feed it to NN
-    create_neural_network(df, args.path, args.num_epochs)
+    create_neural_network(df,  args.num_epochs)
 
 
 if __name__ == "__main__":

@@ -2,29 +2,25 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
 from src.constants import output_attribute
 
 
-# Define the MLP architecture
-class MLP(nn.Module):
-    def __init__(self, input_size, hidden_size1, hidden_size2, hidden_size3, hidden_size4, output_size):
-        super(MLP, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_size1)
-        self.fc2 = nn.Linear(hidden_size1, hidden_size2)
-        self.fc3 = nn.Linear(hidden_size2, hidden_size3)
-        self.fc4 = nn.Linear(hidden_size3, hidden_size4)
-        self.fc5 = nn.Linear(hidden_size4, output_size)
+# Define the RNN architecture
+class RNN(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, output_size):
+        super(RNN, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.rnn = nn.RNN(input_size, hidden_size, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        x = torch.relu(self.fc3(x))
-        x = torch.relu(self.fc4(x))
-        x = self.fc5(x)
-        return x
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
+        out, _ = self.rnn(x, h0)
+        out = self.fc(out[:, -1, :])
+        return out
 
 
 # Create a custom dataset class for easier data handling
@@ -40,35 +36,26 @@ class EthereumDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 
-def create_neural_network(data, path, epoch_num):
-    # Split the data into 70% training and 30% testing
-    train_data, test_data = train_test_split(data, test_size=0.3, random_state=42)
-
+def create_neural_network(data, epoch_num):
     # Separate the input features and output (PriceUSD)
-    X_train = train_data.drop(output_attribute, axis=1).values
-    y_train = train_data[output_attribute].values
-    X_test = test_data.drop(output_attribute, axis=1).values
-    y_test = test_data[output_attribute].values
+    X = data.drop(output_attribute, axis=1).values
+    y = data[output_attribute].values
 
     # Create the datasets and data loaders
-    train_dataset = EthereumDataset(X_train, y_train)
-    test_dataset = EthereumDataset(X_test, y_test)
+    dataset = EthereumDataset(X, y)
+    loader = DataLoader(dataset, batch_size=64, shuffle=True)
 
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=64)
     # Set the device (use GPU if available)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Instantiate the MLP model and define the loss function, optimizer, and learning rate
+    # Instantiate the RNN model and define the loss function, optimizer, and learning rate
     input_size = 8
-    hidden_size1 = 64
-    hidden_size2 = 128
-    hidden_size3 = 64
-    hidden_size4 = 32
+    hidden_size = 128
+    num_layers = 2
     output_size = 1
     learning_rate = 0.001
 
-    model = MLP(input_size, hidden_size1, hidden_size2, hidden_size3, hidden_size4, output_size).to(device)
+    model = RNN(input_size, hidden_size, num_layers, output_size).to(device)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -76,11 +63,11 @@ def create_neural_network(data, path, epoch_num):
     num_epochs = epoch_num
     for epoch in range(num_epochs):
         model.train()
-        for i, (inputs, targets) in enumerate(train_loader):
+        for i, (inputs, targets) in enumerate(loader):
             inputs, targets = inputs.to(device), targets.to(device)
 
             optimizer.zero_grad()
-            outputs = model(inputs)
+            outputs = model(inputs.unsqueeze(1))
 
             loss = criterion(outputs.squeeze(), targets)
             loss.backward()
@@ -90,32 +77,22 @@ def create_neural_network(data, path, epoch_num):
         if epoch % 100 == 0:
             print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.6f}")
 
-    # Evaluate the model on the test set
+    # Evaluate the model on the dataset
     model.eval()
 
     with torch.no_grad():
         y_pred = []
         y_true = []
-        for inputs, targets in test_loader:
+        for inputs, targets in loader:
             inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs)
+            outputs = model(inputs.unsqueeze(1))
 
             y_pred.extend(outputs.squeeze().tolist())
             y_true.extend(targets.tolist())
 
-    # Calculate R-squared and RMSE
+        # Calculate R-squared and RMSE
     r2 = r2_score(y_true, y_pred)
     rmse = mean_squared_error(y_true, y_pred, squared=False)
 
     print(f"R-squared: {r2:.6f}")
     print(f"RMSE: {rmse:.6f}")
-
-    # Test the neural network
-    with torch.no_grad():
-        outputs = model(torch.Tensor(X_test))
-        print("Predicted\tActual")
-        for i in range(len(outputs)):
-            if i % 15 == 0:
-                print(f'{outputs[i].item()}\t{y_test[i]}')
-
-
