@@ -50,7 +50,7 @@ def create_neural_network(data, epoch_num):
 
     # Instantiate the RNN model and define the loss function, optimizer, and learning rate
     input_size = 8
-    hidden_size = 128
+    hidden_size = 256
     num_layers = 2
     output_size = 1
     learning_rate = 0.001
