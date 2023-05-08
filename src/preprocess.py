@@ -54,7 +54,7 @@ def scale_eth(df):
     convert_from_date_to_float(df, "time")
     standard_scale(df, "time")
     robust_scale(df, "BlkCnt")
-    min_max_scale(df, "CapMrktCurUSD")
+    df.drop("CapMrktCurUSD", axis=1, inplace=True)
     min_max_scale(df, "DiffMean")
     min_max_log_scale(df, "FeeMeanUSD")
     min_max_log_scale(df, "FlowInExUSD")

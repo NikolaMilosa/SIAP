@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 
 from src.constants import output_attribute
 
@@ -56,7 +56,7 @@ def create_neural_network(data, path, epoch_num):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Instantiate the MLP model and define the loss function, optimizer, and learning rate
-    input_size = 9
+    input_size = 8
     hidden_size1 = 128
     hidden_size2 = 64
     output_size = 1
@@ -97,9 +97,12 @@ def create_neural_network(data, path, epoch_num):
             y_pred.extend(outputs.squeeze().tolist())
             y_true.extend(targets.tolist())
 
-    # Calculate the mean squared error
-    mse = mean_squared_error(y_true, y_pred)
-    print(f"Mean Squared Error: {mse:.6f}")
+    # Calculate R-squared and RMSE
+    r2 = r2_score(y_true, y_pred)
+    rmse = mean_squared_error(y_true, y_pred, squared=False)
+
+    print(f"R-squared: {r2:.6f}")
+    print(f"RMSE: {rmse:.6f}")
 
     # Test the neural network
     with torch.no_grad():
