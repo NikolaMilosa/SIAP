@@ -41,11 +41,12 @@ def convert_from_date_to_float(df, col_name):
 
 def scale_btc(df):
     convert_from_date_to_float(df, "time")
-    standard_scale(df, "BlkCnt")
-    min_max_scale(df, "CapMrktCurUSD")
+    standard_scale(df, "time")
+    robust_scale(df, "BlkCnt")
+    df.drop("CapMrktCurUSD", axis=1, inplace=True)
     min_max_scale(df, "DiffMean")
-    robust_scale(df, "FeeMeanUSD")
-    robust_scale(df, "FlowInExUSD")
+    min_max_log_scale(df, "FeeMeanUSD")
+    min_max_log_scale(df, "FlowInExUSD")
     min_max_scale(df, "HashRate")
     robust_scale(df, "ROI30d")
 

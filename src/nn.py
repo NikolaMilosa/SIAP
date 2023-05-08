@@ -10,16 +10,20 @@ from src.constants import output_attribute
 
 # Define the MLP architecture
 class MLP(nn.Module):
-    def __init__(self, input_size, hidden_size1, hidden_size2, output_size):
+    def __init__(self, input_size, hidden_size1, hidden_size2, hidden_size3, hidden_size4, output_size):
         super(MLP, self).__init__()
         self.fc1 = nn.Linear(input_size, hidden_size1)
         self.fc2 = nn.Linear(hidden_size1, hidden_size2)
-        self.fc3 = nn.Linear(hidden_size2, output_size)
+        self.fc3 = nn.Linear(hidden_size2, hidden_size3)
+        self.fc4 = nn.Linear(hidden_size3, hidden_size4)
+        self.fc5 = nn.Linear(hidden_size4, output_size)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = torch.relu(self.fc3(x))
+        x = torch.relu(self.fc4(x))
+        x = self.fc5(x)
         return x
 
 
@@ -57,12 +61,14 @@ def create_neural_network(data, path, epoch_num):
 
     # Instantiate the MLP model and define the loss function, optimizer, and learning rate
     input_size = 8
-    hidden_size1 = 128
-    hidden_size2 = 64
+    hidden_size1 = 64
+    hidden_size2 = 128
+    hidden_size3 = 64
+    hidden_size4 = 32
     output_size = 1
     learning_rate = 0.001
 
-    model = MLP(input_size, hidden_size1, hidden_size2, output_size).to(device)
+    model = MLP(input_size, hidden_size1, hidden_size2, hidden_size3, hidden_size4, output_size).to(device)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
